@@ -323,8 +323,8 @@ def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
 
         if cost_delta <= 0 or random.random() < math.exp(-cost_delta / temperature):
             cur_solution = temp_solution
+            values[i] = cur_solution.total_costs
 
-        values[i] = cur_solution.total_costs
         if i % iter_step == 0 and temperature > low_temperature + 1e-10:
             temperature -= step
             print temperature
@@ -332,8 +332,8 @@ def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
 
 get_greedy()
 start_time = time.time()
-lo, values = get_local()
+sa, values = get_sa()
 end_time = time.time()
-print lo.total_costs
-np.savetxt('values_lo_1.txt', values)
+print sa.total_costs
+np.savetxt('values_sa_2.txt', values)
 print 'Delta time: ',end_time-start_time
