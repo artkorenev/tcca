@@ -12,14 +12,14 @@ from dateutil.parser import parse
 # Data reading
 n, td, xp, yp, xd, yd = data_reader.read_data()
 
-depot_position_x = 0
-depot_position_y = 0
+depot_position_x = 40.5
+depot_position_y = -71.0
 
-N_drivers = 2
+N_drivers = 200
 N_clients = n
 
-C_assignment = 5
-speed_limit = 1
+C_assignment = 40000
+speed_limit = 0.01
 
 
 # current drivers state
@@ -284,18 +284,20 @@ def get_neighbour(solution):
     return new_solution
 
 
-def get_local(n_iter):
+def get_local(n_iter = 15000):
     cur_solution = get_random()
     NUM_ITER = n_iter
     min_cost = cur_solution.total_costs
+    values = np.zeros(n_iter)
     for i in range(NUM_ITER):
         new_solution = get_neighbour(cur_solution)
         #print(new_solution.total_costs)
         if new_solution.total_costs < min_cost:
-            print('!!!!!!!!!!!!!!!!!!!!!!')
-            print(new_solution.total_costs)
+            #print('!!!!!!!!!!!!!!!!!!!!!!')
+            #print(new_solution.total_costs)
             min_cost = new_solution.total_costs
             cur_solution = new_solution
+        values[i] = new_solution.total_costs
 
     print ("Finished")
     print ('Costs = ', cur_solution.total_costs)
@@ -306,9 +308,11 @@ def get_local(n_iter):
             assigned_drivers += 1
 
     print (assigned_drivers)
+    return cur_solution, values
 
 
 def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
+    values = np.zeros(n_iter)
     cur_solution = get_greedy()
     print cur_solution.total_costs
     temperature = 1.0  # init temperature
@@ -320,14 +324,16 @@ def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
         if cost_delta <= 0 or random.random() < math.exp(-cost_delta / temperature):
             cur_solution = temp_solution
 
+        values[i] = cur_solution.total_costs
         if i % iter_step == 0 and temperature > low_temperature + 1e-10:
             temperature -= step
             print temperature
-    return cur_solution
+    return cur_solution, values
 
 get_greedy()
 start_time = time.time()
-sa = get_sa()
+sa, values = get_sa()
 end_time = time.time()
 print sa.total_costs
+np.savetxt('values_sa_1.txt', values)
 print 'Delta time: ',end_time-start_time
