@@ -332,8 +332,8 @@ def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
 
 get_greedy()
 start_time = time.time()
-sa, values = get_sa()
+lo, values = get_local()
 end_time = time.time()
-print sa.total_costs
-np.savetxt('values_sa_1.txt', values)
+print lo.total_costs
+np.savetxt('values_lo_1.txt', values)
 print 'Delta time: ',end_time-start_time
