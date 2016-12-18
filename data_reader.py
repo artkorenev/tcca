@@ -82,6 +82,7 @@ def read_data(filename='data/04.12.2014.csv', verbose=False):
     x_pos = df.as_matrix(columns=['Lat']).reshape(-1)
     y_pos = df.as_matrix(columns=['Lon']).reshape(-1)
 
+
     # number of clients
     n = times.shape[0] / 2
 
@@ -116,19 +117,19 @@ def get_easy_data():
 
     return n, td, xp, yp, xd, yd
 
-
-if __name__ == "__main__":
-    n, td, xp, yp, xd, yd = read_data(filename='data/04.12.2014.csv', verbose=True)
-
-    print
-    print 'Total clients: {}'.format(n)
-    print 'Desired Times: {}, shape: {}'.format(td, td.shape)
-    print 'Pickup X-coordinate: {}, shape: {}'.format(xp, xp.shape)
-    print 'Pickup Y-coordinate: {}, shape: {}'.format(yp, yp.shape)
-    print 'Destination X-coordinate: {}, shape: {}'.format(xd, xd.shape)
-    print 'Distanation Y-coordinate: {}, shape: {}'.format(yd, yd.shape)
-
-    # n, td, xp, yp, xd, yd = get_easy_data()
-
-    minAB = latlon_to_minute_data(xp, yp, xd, yd, av_speed=40, m_s=False, m=True)
-    # print np.mean(minAB)
+#
+# if __name__ == "__main__":
+#     n, td, xp, yp, xd, yd = read_data(filename='data/04.12.2014.csv')  # , verbose=True)
+#
+#     print
+#     print 'Total clients: {}'.format(n)
+#     print 'Desired Times: {}, shape: {}'.format(td, td.shape)
+#     print 'Pickup X-coordinate: {}, shape: {}'.format(xp, xp.shape)
+#     print 'Pickup Y-coordinate: {}, shape: {}'.format(yp, yp.shape)
+#     print 'Destination X-coordinate: {}, shape: {}'.format(xd, xd.shape)
+#     print 'Distanation Y-coordinate: {}, shape: {}'.format(yd, yd.shape)
+#
+#     # n, td, xp, yp, xd, yd = get_easy_data()
+#
+#     minAB = latlon_to_minute_data(xp, yp, xd, yd, av_speed=40, m_s=False, m=True)
+#     print np.mean(minAB)
