@@ -4,6 +4,66 @@ import pandas as pd
 import numpy as np
 import time
 
+
+def latlon_to_minute_data(xp, yp, xd, yd, av_speed=40, time=True, m_s=False, m=True):
+    """
+   :param dataA: pickups lat/lon, np.ndarray of N x 2
+   :param dataB: drops lat/lon, np.ndarray of N x 2
+   :return: minutes to travel from every A to every B (need A_i -> B_i and B_j -> A_i), np.ndarray N x N
+   """
+    r = xp.shape[0]
+    # kms = latlon_to_metres_data(np.hstack((xp[:r].reshape(-1, 1), yp[:r].reshape(-1, 1))),
+    #                             np.hstack((xd[:r].reshape(-1, 1), yd[:r].reshape(-1, 1))))
+    dataA = np.hstack((xp[:r].reshape(-1, 1), yp[:r].reshape(-1, 1)))
+    dataB = np.hstack((xd[:r].reshape(-1, 1), yd[:r].reshape(-1, 1)))
+    N = dataB.shape[0]
+    n = 100
+    res = np.empty((N, N))
+    R = 6378.137  # Radius of earth in KM var
+    for i in range(np.round(N / n)):
+        start = i * n
+        end = (i + 1) * n + (i + 1 == np.round(N / n)) * (N % n - 1)
+        # (B-A)_ijk = (dataB_i-dataA_j)_k, k = lat/lon
+        dLatLonBA = dataB[start: end, np.newaxis, :] * np.pi / 180 - \
+                    dataA[np.newaxis, :, :] * np.pi / 180
+        dLatBA = dLatLonBA[:, :, 0]
+        dLonBA = dLatLonBA[:, :, 1]
+        a = np.sin(dLatBA / 2) * np.sin(dLatBA / 2) + \
+            np.cos(dataA[np.newaxis, :, 0] * np.pi / 180) * \
+            np.cos(dataB[start: end, 0, np.newaxis] * \
+                   np.pi / 180) * np.sin(dLonBA / 2) * np.sin(dLonBA / 2)
+        res[start:end] = R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) * \
+                         (av_speed / (1 * (1 - m_s) + m_s * (3600 / 1000.))) ** (-1) * (1 * (1 - m) + m * 60)
+        return res  # minutes
+
+
+def latlon_to_metres_data(dataA, dataB):
+    """
+   :param dataA: pickups lat/lon, np.ndarray of N x 2
+   :param dataB: drops lat/lon, np.ndarray of N x 2
+   :return: metres from every A to every B (need A_i -> B_i and B_j -> A_i), np.ndarray N x N
+   """
+    N = dataB.shape[0]
+    n = 100
+    res = np.empty((N, N))
+    R = 6378.137  # Radius of earth in KM var
+    for i in range(np.round(N / n)):
+        start = i * n
+        end = (i + 1) * n + (i + 1 == np.round(N / n)) * (N % n - 1)
+        # (B-A)_ijk = (dataB_i-dataA_j)_k, k = lat/lon
+        dLatLonBA = dataB[start: end, np.newaxis, :] * np.pi / 180 - \
+                    dataA[np.newaxis, :, :] * np.pi / 180
+        dLatBA = dLatLonBA[:, :, 0]
+        dLonBA = dLatLonBA[:, :, 1]
+        a = np.sin(dLatBA / 2) * np.sin(dLatBA / 2) + \
+            np.cos(dataA[np.newaxis, :, 0] * np.pi / 180) * \
+            np.cos(dataB[start: end, 0, np.newaxis] * \
+                   np.pi / 180) * np.sin(dLonBA / 2) * np.sin(dLonBA / 2)
+        res[start: end] = R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+    # print start, end
+    return res  # meters
+
+
 def read_data(filename='data/04.12.2014.csv', verbose=False):
     df = pd.read_csv(filename)
 
@@ -36,8 +96,8 @@ def read_data(filename='data/04.12.2014.csv', verbose=False):
     xd = x_pos[n:]
     yd = y_pos[n:]
 
-
     return n, td, xp, yp, xd, yd
+
 
 def get_easy_data():
     # number of clients
@@ -68,4 +128,7 @@ if __name__ == "__main__":
     print 'Destination X-coordinate: {}, shape: {}'.format(xd, xd.shape)
     print 'Distanation Y-coordinate: {}, shape: {}'.format(yd, yd.shape)
 
+    # n, td, xp, yp, xd, yd = get_easy_data()
 
+    minAB = latlon_to_minute_data(xp, yp, xd, yd, av_speed=40, m_s=False, m=True)
+    # print np.mean(minAB)
