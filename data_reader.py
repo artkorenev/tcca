@@ -8,7 +8,7 @@ def read_data(filename='data/04.12.2014.csv', verbose=False):
     df = pd.read_csv(filename)
 
     # sorting by time
-    df = df.sort_values(['Hour', 'Minute'])
+    df = df.sort(['Hour', 'Minute'])
 
     if verbose:
         print df.head()
