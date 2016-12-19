@@ -10,7 +10,10 @@ Also, here we directly solve both primary and dual problems on
 each step, despite the fact that we can obtain a solution of
 dual (or primary) problem via KKT.
 
-
+At each step we find dual variables and solve ESPPRC algorithm
+for finding a good pattern to include in the next step during
+solving the algorithm on the second step. And we iterate these
+steps in order to obtain best possible solution to our problem.
 """
 
 
