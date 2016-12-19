@@ -9,16 +9,16 @@ def distance(x1, y1, x2, y2):
     return np.sqrt((x1 - x2 ) ** 2 + (y1 - y2) ** 2)
 
 # Data reading
-n, td, xp, yp, xd, yd = data_reader.read_data()
+n, td, xp, yp, xd, yd = data_reader.read_data(in_times=True)
 segm = data_reader.get_segments(xp, yp, xd, yd)
-speed = .01
-driver_opening_cost = 40000.0
+speed = 40.0
+driver_opening_cost = 40.0
 
 # drivers
 m = 200
 
-d_pos_x = np.ones(m) * 40.5
-d_pos_y = np.ones(m) * -71.0
+d_pos_x = np.ones(m) * -1.0
+d_pos_y = np.ones(m) * -1.0
 
 # driver time
 d_time = np.zeros(m)
