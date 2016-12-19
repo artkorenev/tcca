@@ -10,16 +10,18 @@ import time
 from dateutil.parser import parse
 
 # Data reading
-n, td, xp, yp, xd, yd = data_reader.read_data()
+n, td, xp, yp, xd, yd = data_reader.read_data(in_times=True)
 
-depot_position_x = 40.5
-depot_position_y = -71.0
+depot_position_x = -1
+depot_position_y = -1
 
 N_drivers = 200
 N_clients = n
 
-C_assignment = 40000
-speed_limit = 0.01
+C_assignment = 40
+
+#speed in km/min
+speed_limit = 1.0
 
 
 # current drivers state
@@ -311,8 +313,8 @@ def get_local(n_iter = 15000):
     return cur_solution, values
 
 
-def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
-    values = np.zeros(n_iter)
+def get_sa(n_iter=25000, low_temperature=0.1, step=0.1, iter_step=500):
+    values = []
     cur_solution = get_greedy()
     print cur_solution.total_costs
     temperature = 1.0  # init temperature
@@ -322,18 +324,19 @@ def get_sa(n_iter=15000, low_temperature=0.1, step=0.1, iter_step=500):
         cost_delta = (temp_solution.total_costs - cur_solution.total_costs) / cur_solution.total_costs
 
         if cost_delta <= 0 or random.random() < math.exp(-cost_delta / temperature):
-            cur_solution = temp_solution
-            values[i] = cur_solution.total_costs
+            if temperature != 0.1 or cost_delta <= 0:
+                cur_solution = temp_solution
+                values.append(cur_solution.total_costs)
 
         if i % iter_step == 0 and temperature > low_temperature + 1e-10:
             temperature -= step
             print temperature
-    return cur_solution, values
+    return cur_solution, np.asarray(values)
 
 get_greedy()
 start_time = time.time()
 sa, values = get_sa()
 end_time = time.time()
 print sa.total_costs
-np.savetxt('values_sa_2.txt', values)
+np.savetxt('sa_random.txt', values)
 print 'Delta time: ',end_time-start_time
