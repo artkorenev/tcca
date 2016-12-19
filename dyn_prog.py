@@ -1,3 +1,14 @@
+"""
+OBSOLETED FILE:
+
+For the last implementation of the greedy dynamic programming go
+to file "dynamic2.py".
+
+This file serves for history purposes only, the results of the
+launch may vary from your expectations.
+"""
+
+
 # Dynamic programming solutions here
 
 import numpy as np

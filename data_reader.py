@@ -1,3 +1,18 @@
+"""
+File to include data gathering and extraction.
+Also some data transformations are available.
+
+Basically, from here we get the data to analyze,
+so there is a simple legend:
+
+    n - number of clients,
+    td - times of clients to be picked up,
+    xp - x-coordinates of client pickup point,
+    yp - y-coordinates of client pickup point,
+    xd - x-coordinates of client destination point,
+    yd - y-coordinates of client destination point.
+"""
+
 # Data preparations
 
 import pandas as pd
@@ -5,7 +20,7 @@ import numpy as np
 import time
 
 
-def read_data(in_times=False, filename='data/04.12.2014.csv', verbose=False):
+def read_data(in_km=False, filename='data/04.12.2014.csv', verbose=False):
     df = pd.read_csv(filename)
 
     # sorting by time
@@ -38,7 +53,7 @@ def read_data(in_times=False, filename='data/04.12.2014.csv', verbose=False):
     xd = x_pos[n:]
     yd = y_pos[n:]
 
-    if in_times:
+    if in_km:
         xp, yp, xd, yd = latlon_to_km(xp, yp, xd, yd)
 
     return n, td, xp, yp, xd, yd
@@ -141,7 +156,7 @@ def get_adj_graph(xp, yp, xd, yd):
         A[i, i] = -1
     return A
 
-
+## Small testing here, to see what data is actually like
 if __name__ == "__main__":
     n, td, xp, yp, xd, yd = read_data(filename='data/04.12.2014.csv')  # , verbose=True)
 
@@ -152,9 +167,3 @@ if __name__ == "__main__":
     print 'Pickup Y-coordinate: {}, shape: {}'.format(yp, yp.shape)
     print 'Destination X-coordinate: {}, shape: {}'.format(xd, xd.shape)
     print 'Distanation Y-coordinate: {}, shape: {}'.format(yd, yd.shape)
-
-
-    #minAB = latlon_to_minute_data(xp, yp, xd, yd, av_speed=40, m_s=False, m=True)
-    # min_xd_yd = latlon_to_minute_data(np.array([0]), np.array([0]), xd, yd, av_speed=40, m_s=False, m=True)
-
-    #print np.mean(minAB)
