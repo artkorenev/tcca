@@ -10,7 +10,7 @@ import time
 from dateutil.parser import parse
 
 # Data reading
-n, td, xp, yp, xd, yd = data_reader.read_data(in_times=True)
+n, td, xp, yp, xd, yd = data_reader.read_data(in_km=True)
 
 depot_position_x = -1
 depot_position_y = -1
@@ -334,6 +334,16 @@ def get_sa(n_iter=25000, low_temperature=0.1, step=0.1, iter_step=500):
     return cur_solution, np.asarray(values)
 
 get_greedy()
+
+print 'Local search'
+start_time = time.time()
+lo, values = get_local()
+end_time = time.time()
+print lo.total_costs
+np.savetxt('local_random.txt', values)
+print 'Delta time: ',end_time-start_time
+
+print 'Simulating annealing'
 start_time = time.time()
 sa, values = get_sa()
 end_time = time.time()
