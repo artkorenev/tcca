@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 % matplotlib inline
 
 
-def graph_solution(greedy_solution, N_drivers, N_clients, depot_position_x, depot_position_y, xp, yp, xd, yd):
-    plt.figure(figsize=(15, 15))
+def graph_solution(greedy_solution, N_drivers, N_clients, depot_position_x, depot_position_y, xp, yp, xd, yd, offset = 0.05):
+    plt.figure(figsize=(10, 10))
 
     G = nx.DiGraph()
 
@@ -16,9 +16,9 @@ def graph_solution(greedy_solution, N_drivers, N_clients, depot_position_x, depo
     for i in range(N_clients):
         pos_nodes["{}p".format(i)] = (xp[i], yp[i])
         pos_nodes["{}d".format(i)] = (xd[i], yd[i])
-        pos_labels["{}p".format(i)] = (xp[i] + 0.005, yp[i] + 0.005)
-        pos_labels["{}d".format(i)] = (xd[i] + 0.005, yd[i] + 0.005)
-        pos_labels["s"] = (depot_position_x + 0.005, depot_position_y + 0.005)
+        pos_labels["{}p".format(i)] = (xp[i] + offset, yp[i] + offset)
+        pos_labels["{}d".format(i)] = (xd[i] + offset, yd[i] + offset)
+        pos_labels["s"] = (depot_position_x + offset, depot_position_y + offset)
         labels["{}p".format(i)] = "{}p".format(i)
         labels["{}d".format(i)] = "{}d".format(i)
         labels["s"] = "s"
@@ -35,6 +35,8 @@ def graph_solution(greedy_solution, N_drivers, N_clients, depot_position_x, depo
                 cur_c = greedy_solution.cur_driver_path[i][c]
                 prev_c = greedy_solution.cur_driver_path[i][c - 1]
                 driver_edges.append(("{}d".format(prev_c), "{}p".format(cur_c)))
+                driver_edges.append(("{}p".format(prev_c), "{}d".format(prev_c)))
+                driver_edges.append(("{}p".format(cur_c), "{}d".format(cur_c)))
             driver_edges.append(
                 ("s", "{}p".format(greedy_solution.cur_driver_path[i][0])))  # Add edge from start to first pickup
             driver_edges.append(
@@ -44,6 +46,6 @@ def graph_solution(greedy_solution, N_drivers, N_clients, depot_position_x, depo
         nx.draw_networkx_edges(G, pos_nodes, edgelist=driver_edges, edge_color=color, width=1.2)
 
     nx.draw_networkx_labels(G, pos_labels, labels, font_size=10)
-    nx.draw_networkx_edges(G, pos_nodes, edgelist=c_edges, edge_color='black', width=0.5)
+    #nx.draw_networkx_edges(G, pos_nodes, edgelist=c_edges, edge_color='black', width=0.5)
 
     nx.draw_networkx_nodes(G, pos=pos_nodes, node_size=50)
