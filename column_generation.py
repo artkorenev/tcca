@@ -1,3 +1,22 @@
+"""
+This file is dedicated to the Column Generation technique
+of solving our optimization problem.
+
+As it was stated, because of the ESPPRC algorithm, we cannot
+handle the big chunks of data, so here we provided only a small
+demo.
+
+Also, here we directly solve both primary and dual problems on
+each step, despite the fact that we can obtain a solution of
+dual (or primary) problem via KKT.
+
+At each step we find dual variables and solve ESPPRC algorithm
+for finding a good pattern to include in the next step during
+solving the algorithm on the second step. And we iterate these
+steps in order to obtain best possible solution to our problem.
+"""
+
+
 import numpy as np
 import cvxpy as cvx
 import data_reader
@@ -9,13 +28,14 @@ n, td, xp, yp, xd, yd = data_reader.get_easy_data()
 segm = data_reader.get_segments(xp, yp, xd, yd)
 speed = 1.0
 
-
+# Simple distance function
 def distance(x1, y1, x2, y2):
     return np.sqrt((x1 - x2 ) ** 2 + (y1 - y2) ** 2)
 
 
-def get_adj_graph(xp, yp, xd, yd, depot_x, depot_y):
-    B = np.fromfunction(lambda i, j: np.sqrt((xd[i]-xp[j])**2+(yd[i]-yp[j])**2), (xp.size, xp.size), dtype=int)
+# Creating the improved adjacent matrix to be passed to ESPPRC (added depots from each side)
+def get_adj_matrix(xp, yp, xd, yd, depot_x, depot_y):
+    B = data_reader.get_adj_graph(xp, yp, xd, yd)
 
     A = np.zeros((B.shape[0] + 2, B.shape[1] + 2))
     A[1:B.shape[0] + 1, 1:B.shape[1] + 1] = B
@@ -33,8 +53,9 @@ def get_adj_graph(xp, yp, xd, yd, depot_x, depot_y):
     return A
 
 
+# Preparing data pack for ESPPRC algorithm
 def prepare_espprc_data(xp, yp, xd, yd, td, depot_x, depot_y):
-    A = get_adj_graph(xp, yp, xd, yd, depot_x, depot_y)
+    A = get_adj_matrix(xp, yp, xd, yd, depot_x, depot_y)
 
     segm = data_reader.get_segments(xp, yp, xd, yd)
     route = np.zeros(2 + segm.shape[0])
@@ -42,7 +63,7 @@ def prepare_espprc_data(xp, yp, xd, yd, td, depot_x, depot_y):
 
     tc = np.zeros(2 + td.shape[0])
     tc[0] = 0.0
-    tc[-1] = 1000000000000.0  # infinity for this task
+    tc[-1] = 1000000000000.0  # infinity for this task (cannot be np.inf since it's quite not comparable)
     tc[1:td.shape[0] + 1] = td
 
     return A, route, tc
@@ -72,6 +93,8 @@ def compute_the_penalty(route):
     return lateness_penalty + np.sum(segm[route]) + distance_between
 
 
+# Given a root, computing its binary representation (i.e. [0, 1, 0, ..., 1, 1, 1])
+# and its cost.
 def binary_route(route):
     cost = compute_the_penalty(route)
 
@@ -80,15 +103,8 @@ def binary_route(route):
 
     return binary_route, cost
 
-def find_initial_routes():
-    '''Creates route matrix A, covering all clients for a given number of taxis'''
 
-    route = []
-    for i in range(n):
-        route.append(i)
-
-    return binary_route(route)
-
+# Providing the initial number of not sufficient routes that are used in the task
 def prepare_initial_data():
     print 'Expected solution is: two routes: [0, 1, 2, 3] and [4, 5, 6, 7]'
     print 'or in binary solution is [1, 1, 1, 1, 0, 0, 0, 0] and [0, 0, 0, 0, 1, 1, 1, 1]'
@@ -162,14 +178,14 @@ def solve_primary(patterns, costs, cars):
     return res, x.value
 
 
+# Method to start solving the problem using Column Generation technique
 def solve_cg():
-    '''Finds a solution of the given problem using column generation
-       Initial A - identity matrix of size CxC
-       Uses a limit of iterations to get a solution in reasonable time
-       C - number of clients, N - number of taxi cars'''
     patterns, costs, routes = prepare_initial_data()
 
+    # number of cars
     cars = 2
+
+    # we restrict our algorithm by number of iterations
     iterations = 8
 
     x = None
@@ -184,26 +200,26 @@ def solve_cg():
         print 'Primary solution', x
         res_dual, y = solve_dual(patterns, costs, cars)
 
-        # solving the ESPPRC problem
+        # solving the ESPPRC problem with a solution to the dual problem
         A, route, tc = prepare_espprc_data(xp, yp, xd, yd, td, 0.0, 0.0)
-        labels = espprc.espprc(0, A, route, tc, y)[-1]
+        labels = espprc.espprc(0, A, route, tc, y)[-1] # getting labels from depot to depot (0 is a depot, -1 is a depot also)
 
         lmbd = np.zeros(n)
         for i in range(n):
             lmbd[i] = y[i]
 
+        # Searching for the new minimal distance route
         min_i = 0
         min_v = np.inf
-
         for i in range(len(labels)):
             if labels[i][0][-1] < min_v:
-                is_a_copy = False
+                is_already_in_patterns = False
                 for j in range(patterns.T.shape[0]):
                     if np.linalg.norm(patterns.T[j] - labels[i][0][3:-2]) == 0:
-                        is_a_copy = True
+                        is_already_in_patterns = True
                         break
 
-                if not is_a_copy:
+                if not is_already_in_patterns:
                     min_v = labels[i][0][-1]
                     min_i = i
 
@@ -226,4 +242,3 @@ def solve_cg():
 
 
 solve_cg()
-

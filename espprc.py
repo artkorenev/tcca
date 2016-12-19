@@ -1,17 +1,43 @@
+"""
+Here is an ESPPRC algorithm implementation.
+The paper that it is based on:
+http://onlinelibrary.wiley.com/doi/10.1002/net.20033/abstract
+
+Unfortunately, due to extremely limitied amount of the time,
+the performance of the algorithm is extremely poor.
+Therefore, we could not handle any big dataset to solve the
+problem using the algorithm, so we provided a really tiny
+demo for the algorithm in column_generation.py file.
+
+So the algorithm is basically an shortest-path algorithm that
+also considers the resource constraints (in our case it is time).
+We see, what paths 'dominate' other paths (i.e. some paths are
+clearly more effective than others) and eliminate worse such
+paths.
+This algorithm can be viewed as a Bellman's algorithm for
+finding the shortest-paths.
+
+In our problem, we find a shortest-path from our depot to itself
+but prohibiting travelling to itself directly (so we need to find
+paths through the clients).
+"""
+
+
 import numpy as np
 import copy
 
 def empty_label(n):
     return [
-        np.zeros(1 + 1 + n + 1),
-        [-1]
+        np.zeros(1 + 1 + n + 1),    # 1 is time constraint,
+                                    # 1 is number of elements in path,
+                                    # n is binary variables,
+                                    # 1 is cost
+        [-1]  # list to recover the route, values are added during the algorithm
     ]
-    # 1 is time constraint,
-    # 1 is number of elements in path,
-    # n is binary variables,
-    # 1 is cost
 
 
+# Extending the given label with adjacent vertex.
+# Basically, we 'extend' the path to the given vertex.
 def extend_label(label, fr, to, A, route, tc, lmbd):
     dist = A[fr, to]
 
@@ -26,11 +52,12 @@ def extend_label(label, fr, to, A, route, tc, lmbd):
     new_label[0][0] = new_time + route[to]
     new_label[0][2 + to] = 1
     new_label[0][1] = label[0][1] + 1
+    # recalculating the cost
     new_label[0][-1] += dist + route[to] - lmbd[to] \
                         + (new_time - tc[to]) ** 2
 
     new_label.append(copy.copy(label[1]))
-    new_label[1].append(to - 1)
+    new_label[1].append(to - 1)  # Adding the given point to the route
 
     # Optimization step with euristic, not workable in our case, since our windows are not fixed
     # for i in range(A.shape[0]):
@@ -44,10 +71,16 @@ def extend_label(label, fr, to, A, route, tc, lmbd):
     return new_label
 
 
+# if left label is left dominant than the right
+# (i.e. all values are bigger or equal than in the right label)
 def left_dominant(labelleft, labelright):
     return np.all(labelleft[0] >= labelright[0])
 
 
+# Given two sets of labels merging to the one without any
+# dominating labels between each other
+# (i know, that it is an awful piece of code in terms of
+# performance)
 def remove_dominant_labels(old_labels, new_labels):
     new_removed = np.zeros(len(new_labels))
 
@@ -85,6 +118,9 @@ def remove_dominant_labels(old_labels, new_labels):
     return result, changed
 
 
+# Launching the algorithm from the point p (p is an index)
+# lmbd is a dual problem solution that we need to use during the
+# solving this problem
 def espprc(p, A, route, tc, lmbd=None):
     lmbd_extended = np.zeros(A.shape[0])
 
@@ -98,7 +134,7 @@ def espprc(p, A, route, tc, lmbd=None):
     for i in xrange(n):
         labels.append([])
 
-    labels[p] = [empty_label(n)]
+    labels[p] = [empty_label(n)] # starting with the empty label
 
     queue = [p]
 
@@ -123,18 +159,3 @@ def espprc(p, A, route, tc, lmbd=None):
                     queue.append(v_j)
 
     return labels
-
-
-if __name__ == "__main__":
-    A = np.asarray([
-        [-1, 1, -1, 0.5, -1],
-        [-1, -1, 1, -1, -1],
-        [-1, -1, -1, 1, -1],
-        [-1, -1, -1, -1, 1],
-        [-1, -1, -1, -1, -1]
-    ])
-
-    route = np.zeros(5)
-    tc = np.asarray([0.0, 2.0, 4.0, 6.0, 8.0])
-
-    print espprc(0, A, route, tc)
